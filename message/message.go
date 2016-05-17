@@ -8,6 +8,8 @@ type One struct {
 	// IsMuted is true if the event shouldn't
 	// show up in the channel's logs.
 	IsMuted bool `json:"is_muted"`
+	// From is the message's source nickname.
+	From string `json:"from"`
 	// Text is the event's aux text.
 	Text string `json:"text"`
 }
