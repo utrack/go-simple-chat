@@ -1,4 +1,4 @@
-package messages
+package message
 
 // EventType marks an event's type.
 type EventType uint64

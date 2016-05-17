@@ -1,8 +1,8 @@
-package messages
+package message
 
-// Message is the data package about an event
+// One is the data package (message) about an event
 // that gets sent to the client.
-type Message struct {
+type One struct {
 	// Type is the message's event type.
 	Type EventType `json:"event_type"`
 	// IsMuted is true if the event shouldn't
