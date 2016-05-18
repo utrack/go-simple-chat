@@ -19,16 +19,19 @@ type session struct {
 
 	// hub's main incoming messages' channel
 	chatChannelChan chan<- message.One
+
+	disconChan chan<- disconMsg
 }
 
 // newSession returns a forged session for given
 // client.
 // args: client, its name, channel to dump incoming messages to.
-func newSession(c client.Client, name string, ch chan<- message.One) *session {
+func newSession(c client.Client, name string, ch chan<- message.One, dch chan<- disconMsg) *session {
 	return &session{
 		c:               c,
 		name:            name,
 		chatChannelChan: ch,
+		disconChan:      dch,
 	}
 }
 
@@ -47,7 +50,7 @@ func (s *session) runPump() {
 				From: s.name,
 				Text: disconReason.Error(),
 			}
-			// TODO
+			s.disconChan <- disconMsg{name: s.name, reason: disconReason.Error()}
 			break
 		}
 	}
