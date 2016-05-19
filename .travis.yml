@@ -10,7 +10,7 @@ env:
 
 script:
   - go test -v -race -covermode=atomic --coverprofile=coverage.out github.com/utrack/go-simple-chat/hub
-  - tail -n +2 coverage_main.out >> coverage.out
+#- tail -n +2 coverage_main.out >> coverage.out
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
