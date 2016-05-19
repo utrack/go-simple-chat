@@ -46,6 +46,9 @@ func (h *hub) RegisterClient(c client.Client, name string) error {
 	sess := newSession(c, name, h.incomingMsgs, h.incomingDiscons)
 	h.addSession(sess)
 	go sess.runPump()
+
+	// Broadcast the EventJoin
+	h.incomingMsgs <- message.One{Type: message.EventJoin, From: name}
 	return nil
 }
 
@@ -93,7 +96,9 @@ func (h *hub) sendMsg(m message.One) {
 	var err error
 	for _, sess := range h.sessions {
 		err = sess.send(m)
-		err.Error()
+		if err != nil {
+
+		}
 		// TODO log debug
 		// Sessions and clients handle error thresholds themselves,
 		// so hub shouldn't discon the session on its own.

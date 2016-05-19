@@ -32,6 +32,15 @@ func (c *clientMock) MsgChan() <-chan message.One {
 	return c.msgChan
 }
 
+func newClientMock() *clientMock {
+	return &clientMock{
+		acceptedMsgs: make(chan message.One, 30),
+		discChan:     make(chan error, 5),
+		msgChan:      make(chan message.One, 30),
+	}
+
+}
+
 func TestSession(t *testing.T) {
 	Convey("With setup", t, func() {
 		// mock hub's channels
@@ -39,11 +48,7 @@ func TestSession(t *testing.T) {
 		disconChan := make(chan disconMsg, 30)
 
 		// Mock client
-		c := &clientMock{
-			acceptedMsgs: make(chan message.One, 30),
-			discChan:     make(chan error, 5),
-			msgChan:      make(chan message.One, 30),
-		}
+		c := newClientMock()
 
 		name := `SomeName`
 		// Session to test
