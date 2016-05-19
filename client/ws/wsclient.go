@@ -58,11 +58,21 @@ func (c *client) Send(m message.One) error {
 }
 
 func (c *client) Disconnect() {
+	c.discon(errors.New("Kicked"))
+}
+
+func (c *client) discon(reason error) {
 	c.messagesToSendMu.Lock()
 	defer c.messagesToSendMu.Unlock()
 
+	if c.messagesToSendClosed {
+		return
+	}
+
 	c.messagesToSendClosed = true
 	close(c.messagesToSend)
+
+	c.disconChan <- reason
 }
 
 // errDisconGoingAway is returned to the disconChan if the client had gracefully closed the channel.
@@ -88,7 +98,7 @@ func (c *client) readPump() {
 
 	// Forward the discon info on disconnect
 	defer func() {
-		c.disconChan <- errDiscon
+		c.discon(errDiscon)
 		c.ws.Close()
 	}()
 
@@ -119,7 +129,7 @@ func (c *client) writePump() {
 	var err error
 	// Forward the discon info on disconnect
 	defer func() {
-		c.disconChan <- err
+		c.discon(err)
 		c.ws.Close()
 	}()
 
