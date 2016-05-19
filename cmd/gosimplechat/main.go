@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/Sirupsen/logrus"
 	"github.com/kennygrant/sanitize"
+	"github.com/utrack/go-simple-chat/client/bot"
 	"github.com/utrack/go-simple-chat/hub"
 	"github.com/utrack/go-simple-chat/interface/http"
 	"html/template"
@@ -28,6 +29,7 @@ func main() {
 
 	h := hub.NewHub(hub.DefaultNameChecker, sanitize.HTML, loggerFunc)
 	h.Run()
+	h.RegisterClient(clientBot.NewBot(), "ChuckServ")
 
 	staticTemplate := template.Must(template.ParseFiles(*tmplPath))
 	http.HandleFunc(`/`, serveStatic(staticTemplate))
