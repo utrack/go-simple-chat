@@ -1,3 +1,4 @@
+//Package message provides data structures that get transferred between the client and server.
 package message
 
 // One is the data package (message) about an event

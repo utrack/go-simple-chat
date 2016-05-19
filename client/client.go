@@ -1,3 +1,4 @@
+//Package client provides abstraction over the client-server transport.
 package client
 
 import (
