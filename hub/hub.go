@@ -23,22 +23,40 @@ type hub struct {
 
 	// sessionsMu protects the sessions' map.
 	sessionsMu sync.RWMutex
+
+	// nameChecker validates the client's name.
+	// Returns transformed name or error if can't recover.
+	nameChecker NameChecker
+
+	// msgSanitizer processes the messages' texts.
+	msgSanitizer Sanitizer
 }
 
 // NewHub initiates and returns the default Hub.
 // Execute hub.Run() to run the processing pumps.
-func NewHub() Hub {
+func NewHub(checker NameChecker, sanitizer Sanitizer) Hub {
 	return &hub{
 		incomingMsgs:    make(chan message.One, 45),
 		incomingDiscons: make(chan disconMsg, 45),
 
 		sessions:   make(map[string]*session),
 		sessionsMu: sync.RWMutex{},
+
+		nameChecker:  checker,
+		msgSanitizer: sanitizer,
 	}
 }
 
 // RegisterClient adds the client to the hub.
 func (h *hub) RegisterClient(c client.Client, name string) error {
+	if h.nameChecker != nil {
+		var err error
+		name, err = h.nameChecker(name)
+		if err != nil {
+			return err
+		}
+	}
+
 	if h.clientExists(name) {
 		return ErrNickCollision
 	}
@@ -93,6 +111,10 @@ func (h *hub) addSession(s *session) {
 func (h *hub) sendMsg(m message.One) {
 	h.sessionsMu.RLock()
 	defer h.sessionsMu.RUnlock()
+
+	if h.msgSanitizer != nil {
+		m.Text = h.msgSanitizer(m.Text)
+	}
 
 	var err error
 	for _, sess := range h.sessions {

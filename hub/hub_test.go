@@ -4,13 +4,14 @@ import (
 	"errors"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/utrack/go-simple-chat/message"
+	"strings"
 	"testing"
 	"time"
 )
 
 func TestHub(t *testing.T) {
 	Convey("With hub", t, func() {
-		h := NewHub().(*hub)
+		h := NewHub(nil, nil).(*hub)
 
 		// Run the pumps
 		h.Run()
@@ -23,6 +24,30 @@ func TestHub(t *testing.T) {
 
 		Convey("ClientExists should return false", func() {
 			So(h.clientExists("foo bar"), ShouldBeFalse)
+		})
+
+		Convey("Client nickname sanitizer", func() {
+			h.nameChecker = func(v string) (string, error) {
+				if v == "should_fail" {
+					return ``, errors.New("failed")
+				}
+				return "bar", nil
+			}
+
+			Convey("RegisterClient should fail with bad nick", func() {
+				c1 := newClientMock()
+				So(h.RegisterClient(c1, "should_fail"), ShouldNotBeNil)
+			})
+			Convey("Should accept new name from sanitizer", func() {
+				c1 := newClientMock()
+				So(h.RegisterClient(c1, "qwe"), ShouldBeNil)
+
+				So(h.clientExists(`bar`), ShouldBeTrue)
+
+				Convey("Should process the nick before checking for collisions", func() {
+					So(h.RegisterClient(c1, `qwe`), ShouldEqual, ErrNickCollision)
+				})
+			})
 		})
 
 		Convey("Client should register successfully", func() {
@@ -91,6 +116,30 @@ func TestHub(t *testing.T) {
 					So(0, ShouldEqual, "client did not receive the message!")
 				}
 				So(got, ShouldResemble, msg)
+
+				Convey("With sanitizer", func() {
+					h.msgSanitizer = func(s string) string {
+						return strings.Replace(s, `bar`, `foo`, -1)
+					}
+
+					Convey("Should sanitize the message's text", func() {
+						msg := message.One{Type: message.EventMessage, IsMuted: true, Text: "barbaz"}
+						c1.msgChan <- msg
+						msg.From = cName
+						msg.Text = `foobaz`
+
+						var got message.One
+						So(got, ShouldNotResemble, msg)
+						select {
+						case got = <-c1.acceptedMsgs:
+						case <-time.After(time.Second):
+							So(0, ShouldEqual, "client did not receive the message!")
+						}
+						So(got, ShouldResemble, msg)
+
+					})
+
+				})
 			})
 
 			Convey("With second client", func() {
