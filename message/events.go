@@ -13,4 +13,7 @@ const (
 	EventPresenceState
 	// EventMessage is sent when a message was received.
 	EventMessage
+	// EventError is sent when an error had occured. Normally it's sent only
+	// during the connection establishment phase.
+	EventError
 )
