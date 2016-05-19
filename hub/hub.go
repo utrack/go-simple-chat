@@ -49,6 +49,7 @@ func (h *hub) RegisterClient(c client.Client, name string) error {
 
 	// Broadcast the EventJoin
 	h.incomingMsgs <- message.One{Type: message.EventJoin, From: name}
+	h.sendUsersList(name, sess.send)
 	return nil
 }
 
@@ -111,4 +112,22 @@ func (h *hub) clientExists(name string) bool {
 	defer h.sessionsMu.RUnlock()
 	_, ok := h.sessions[name]
 	return ok
+}
+
+// sendUsersList sends muted EventJoins for every connected session
+// via the supplied func.
+func (h *hub) sendUsersList(name string, sendFunc func(message.One) error) {
+	h.sessionsMu.RLock()
+	defer h.sessionsMu.RUnlock()
+
+	var err error
+	for _, s := range h.sessions {
+		if s.name == name {
+			continue
+		}
+		err = sendFunc(message.One{Type: message.EventJoin, IsMuted: true, From: s.name})
+		if err != nil {
+			// TODO log
+		}
+	}
 }

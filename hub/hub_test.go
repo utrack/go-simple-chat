@@ -78,6 +78,161 @@ func TestHub(t *testing.T) {
 				So(got, ShouldResemble, msg)
 			})
 
+			Convey("User should retrieve its own message", func() {
+				msg := message.One{Type: message.EventMessage, IsMuted: true, Text: "barbaz"}
+				c1.msgChan <- msg
+				msg.From = cName
+
+				var got message.One
+				So(got, ShouldNotResemble, msg)
+				select {
+				case got = <-c1.acceptedMsgs:
+				case <-time.After(time.Second):
+					So(0, ShouldEqual, "client did not receive the message!")
+				}
+				So(got, ShouldResemble, msg)
+			})
+
+			Convey("With second client", func() {
+				c2Name := "client2"
+				c2 := newClientMock()
+				So(h.RegisterClient(c2, c2Name), ShouldBeNil)
+
+				Convey("Should receive own EventJoin", func() {
+					// Flush EventJoin
+					var got message.One
+				ForOuter:
+					for {
+						select {
+						case got = <-c2.acceptedMsgs:
+							if got.From == c2Name {
+								break ForOuter
+							}
+						case <-time.After(time.Second):
+							So(0, ShouldEqual, "client did not receive the EventJoin!")
+							break ForOuter
+						}
+					}
+					So(got.Type, ShouldEqual, message.EventJoin)
+					So(got.IsMuted, ShouldBeFalse)
+					So(got.From, ShouldEqual, c2Name)
+
+				})
+
+				Convey("First one should receive the EventJoin", func() {
+					var got message.One
+					select {
+					case got = <-c1.acceptedMsgs:
+					case <-time.After(time.Second):
+						So(0, ShouldEqual, "client did not receive the message!")
+					}
+					So(got.Type, ShouldEqual, message.EventJoin)
+					So(got.From, ShouldEqual, c2Name)
+
+					Convey("And nothing more", func() {
+						var got message.One
+						select {
+						case got = <-c1.acceptedMsgs:
+							So(got, ShouldEqual, "client received some message!")
+						case <-time.After(time.Second):
+						}
+						So(got, ShouldResemble, message.One{})
+					})
+				})
+
+				Convey("Second client should rcv muted EventJoins about existing users", func() {
+
+					var got message.One
+					select {
+					case got = <-c2.acceptedMsgs:
+					case <-time.After(time.Second):
+						So(0, ShouldEqual, "client did not receive the EventJoin!")
+					}
+					So(got.Type, ShouldEqual, message.EventJoin)
+					So(got.IsMuted, ShouldBeTrue)
+					So(got.From, ShouldEqual, cName)
+				})
+
+				Convey("With EventJoins dumped", func() {
+					select {
+					case <-c1.acceptedMsgs:
+					case <-time.After(time.Second):
+					}
+
+				ForOuter:
+					for {
+						select {
+						case got = <-c2.acceptedMsgs:
+						case <-time.After(time.Second / 2):
+							break ForOuter
+						}
+					}
+
+					Convey("First should receive EventLeave on second discon", func() {
+						c2.discChan <- errors.New("test")
+
+						var got message.One
+						select {
+						case got = <-c1.acceptedMsgs:
+						case <-time.After(time.Second):
+							So(0, ShouldEqual, "client did not receive the message!")
+						}
+						So(got.Type, ShouldEqual, message.EventLeave)
+						So(got.From, ShouldEqual, c2Name)
+						So(got.IsMuted, ShouldBeFalse)
+						So(got.Text, ShouldEqual, "test")
+					})
+
+					Convey("Second should receive EventLeave on first discon", func() {
+						c1.discChan <- errors.New("test")
+
+						var got message.One
+						select {
+						case got = <-c2.acceptedMsgs:
+						case <-time.After(time.Second):
+							So(0, ShouldEqual, "client did not receive the message!")
+						}
+						So(got.Type, ShouldEqual, message.EventLeave)
+						So(got.From, ShouldEqual, cName)
+						So(got.IsMuted, ShouldBeFalse)
+						So(got.Text, ShouldEqual, "test")
+					})
+
+					Convey("Clients should be able to chat", func() {
+						Convey("First to second", func() {
+							msg := message.One{Type: message.EventMessage, IsMuted: true, Text: "barbaz"}
+							c1.msgChan <- msg
+							msg.From = cName
+
+							var got message.One
+							So(got, ShouldNotResemble, msg)
+							select {
+							case got = <-c2.acceptedMsgs:
+							case <-time.After(time.Second):
+								So(0, ShouldEqual, "client did not receive the message!")
+							}
+							So(got, ShouldResemble, msg)
+						})
+
+						Convey("Second to first", func() {
+							msg := message.One{Type: message.EventMessage, IsMuted: true, Text: "barbaz"}
+							c2.msgChan <- msg
+							msg.From = c2Name
+
+							var got message.One
+							So(got, ShouldNotResemble, msg)
+							select {
+							case got = <-c1.acceptedMsgs:
+							case <-time.After(time.Second):
+								So(0, ShouldEqual, "client did not receive the message!")
+							}
+							So(got, ShouldResemble, msg)
+						})
+
+					})
+
+				})
+			})
 		})
 	})
 }
