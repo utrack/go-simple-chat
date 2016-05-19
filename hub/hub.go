@@ -2,7 +2,9 @@ package hub
 
 import (
 	"github.com/utrack/go-simple-chat/client"
+	"github.com/utrack/go-simple-chat/logger"
 	"github.com/utrack/go-simple-chat/message"
+	"log"
 	"sync"
 )
 
@@ -30,11 +32,18 @@ type hub struct {
 
 	// msgSanitizer processes the messages' texts.
 	msgSanitizer Sanitizer
+
+	log logger.Logger
 }
 
 // NewHub initiates and returns the default Hub.
 // Execute hub.Run() to run the processing pumps.
-func NewHub(checker NameChecker, sanitizer Sanitizer) Hub {
+func NewHub(checker NameChecker, sanitizer Sanitizer, l logger.Logger) Hub {
+	if l == nil {
+		l = func(_ logger.Level, f string, opts ...interface{}) {
+			log.Printf(f, opts...)
+		}
+	}
 	return &hub{
 		incomingMsgs:    make(chan message.One, 45),
 		incomingDiscons: make(chan disconMsg, 45),
@@ -44,6 +53,7 @@ func NewHub(checker NameChecker, sanitizer Sanitizer) Hub {
 
 		nameChecker:  checker,
 		msgSanitizer: sanitizer,
+		log:          l,
 	}
 }
 
@@ -68,6 +78,7 @@ func (h *hub) RegisterClient(c client.Client, name string) error {
 	// Broadcast the EventJoin
 	h.incomingMsgs <- message.One{Type: message.EventJoin, From: name}
 	h.sendUsersList(name, sess.send)
+	h.log(logger.LevelDebug, "User connected: %v", name)
 	return nil
 }
 
@@ -85,7 +96,7 @@ func (h *hub) pump() {
 			go h.sendMsg(msg)
 		case discon := <-h.incomingDiscons:
 			h.removeSession(discon.name)
-			// TODO log debug
+			h.log(logger.LevelDebug, "User dropped: %v, reason %v", discon.name, discon.reason)
 		}
 	}
 }
@@ -120,9 +131,8 @@ func (h *hub) sendMsg(m message.One) {
 	for _, sess := range h.sessions {
 		err = sess.send(m)
 		if err != nil {
-
+			h.log(logger.LevelDebug, "Error when sending message to %v: %v", sess.name, err.Error())
 		}
-		// TODO log debug
 		// Sessions and clients handle error thresholds themselves,
 		// so hub shouldn't discon the session on its own.
 	}
@@ -149,7 +159,7 @@ func (h *hub) sendUsersList(name string, sendFunc func(message.One) error) {
 		}
 		err = sendFunc(message.One{Type: message.EventJoin, IsMuted: true, From: s.name})
 		if err != nil {
-			// TODO log
+			h.log(logger.LevelDebug, "Error when sending userlist to %v: %v", name, err.Error())
 		}
 	}
 }

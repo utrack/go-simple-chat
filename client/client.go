@@ -16,4 +16,7 @@ type Client interface {
 	// MsgChan returns channel that receives incoming messages from the
 	// client.
 	MsgChan() <-chan message.One
+
+	// Disconnect forcefully closes the client's connection.
+	Disconnect()
 }
