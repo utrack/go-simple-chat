@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Chat Example</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script type="text/javascript">
+    $(function() {
+    var conn;
+    var msg = $("#msg");
+    var userlist = $("#userlist");
+    var log = $("#log");
+
+    function appendLog(msg) {
+        var d = log[0]
+        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+        msg.appendTo(log)
+        if (doScroll) {
+            d.scrollTop = d.scrollHeight - d.clientHeight;
+        }
+    }
+
+    function constructLogDiv(data) {
+        if (data.is_muted) {
+            return;
+        }
+
+        text = data.text;
+
+        divClass = "";
+        switch(data.event_type) {
+            case 1:
+                divClass = "ev-join";
+                text = "has joined";
+                break;
+            case 2:
+                divClass = "ev-part";
+                text = "has left (" + data.text + ")";
+                break;
+            case 3:
+                divClass = "ev-presence";
+                text = "is now " + data.text;
+                break;
+            case 4:
+                divClass = "ev-msg";
+                text = data.text;
+                break;
+            case 5:
+                divClass = "ev-err";
+                text = "Error: " + data.text;
+                break;
+        }
+
+    var now = new Date();
+    var tr = $("<tr/>").attr("class",divClass);
+    tr.append($("<td class=\"shrink\"/>").text(now.getHours() + ":" + now.getMinutes()));
+    tr.append($("<td class=\"shrink nickname\"/>").text(data.from));
+    tr.append($("<td class=\"expand\"/>").text(text));
+    return tr;
+    }
+
+    function changeUserList(name,joining) {
+        if (joining) {
+            var li = $("<li class=\"list-group-item\"/>").text(name);
+            userlist.append(li);
+        } else {
+            var li = userlist.children().filter(function() {return $(this).text() == name});
+            li.remove();
+        }
+    }
+
+    $("#form").submit(function() {
+        if (!conn) {
+            return false;
+        }
+        if (!msg.val()) {
+            return false;
+        }
+        data = {
+             event_type: 4,
+             text: msg.val()
+        };
+        msg.val("");
+
+        conn.send(JSON.stringify(data));
+        return false
+    });
+
+    // Init websockets and attach onmessage handler
+    if (!window["WebSocket"]) {
+        appendLog($("<div><b>Your browser does not support WebSockets.</b></div>"));
+        return;
+    }
+    var nickname = prompt("Please enter your name", "User1");
+    conn = new WebSocket("ws://{{$}}/ws?name="+nickname);
+    conn.onclose = function(evt) {
+        appendLog($("<div><b>Disconnected from server.</b></div>"))
+    }
+    conn.onmessage = function(evt) {
+        data = JSON.parse(evt.data);
+
+
+        switch(data.event_type) {
+            case 1:
+                changeUserList(data.from,true);
+                break;
+            case 2:
+                changeUserList(data.from,false);
+                break;
+        }
+        appendLog(constructLogDiv(data));
+    }
+    });
+</script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+<style type="text/css">
+
+div .ev-join,.ev-part {
+    color: #67aca6;
+}
+
+table td.nickname {
+    font-weight: bold;
+}
+
+table td.shrink {
+    white-space:nowrap
+}
+table td.expand {
+    width: 99%
+}
+</style>
+</head>
+<body>
+<div class="container-fluid">
+        <div class="row" style="height: 90vh">
+            <div class="col-md-10">
+                <table id="log" class="table">
+                </table>
+            </div>
+            <div class="col-md-2">
+                <ul id="userlist" class="list-group">
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <form id="form">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="msg" size="64"/>
+                        <div class="input-group-btn">
+                            <input type="submit" class="form-control" value="Send" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -32,6 +32,10 @@ func (c *clientMock) MsgChan() <-chan message.One {
 	return c.msgChan
 }
 
+func (c *clientMock) Disconnect() {
+
+}
+
 func newClientMock() *clientMock {
 	return &clientMock{
 		acceptedMsgs: make(chan message.One, 30),

@@ -11,7 +11,7 @@ import (
 
 func TestHub(t *testing.T) {
 	Convey("With hub", t, func() {
-		h := NewHub(nil, nil).(*hub)
+		h := NewHub(nil, nil, nil).(*hub)
 
 		// Run the pumps
 		h.Run()

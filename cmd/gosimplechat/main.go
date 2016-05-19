@@ -6,14 +6,15 @@ import (
 	"github.com/kennygrant/sanitize"
 	"github.com/utrack/go-simple-chat/hub"
 	"github.com/utrack/go-simple-chat/interface/http"
+	"html/template"
 	"net/http"
 )
 
 var httpAddr = flag.String("addr", ":8080", "HTTP socket listening address")
 var logLevel = flag.String("log", "info", "Logging level: Debug,Info,Warn,Error,Fatal")
+var tmplPath = flag.String("static", "assets/static/chat.tmpl", "Path to the page's template")
 
 func main() {
-
 	flag.Parse()
 	lvl, err := logrus.ParseLevel(*logLevel)
 	if err != nil {
@@ -28,6 +29,8 @@ func main() {
 	h := hub.NewHub(hub.DefaultNameChecker, sanitize.HTML, loggerFunc)
 	h.Run()
 
+	staticTemplate := template.Must(template.ParseFiles(*tmplPath))
+	http.HandleFunc(`/`, serveStatic(staticTemplate))
 	http.HandleFunc(`/ws`, ifaceHttp.ServeWs(h))
 
 	logrus.WithField("addr", *httpAddr).Info("Starting HTTP server")
