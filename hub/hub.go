@@ -25,7 +25,7 @@ type hub struct {
 	sessionsMu sync.RWMutex
 }
 
-// NewHub initiates and returns the hub.
+// NewHub initiates and returns the default Hub.
 // Execute hub.Run() to run the processing pumps.
 func NewHub() Hub {
 	return &hub{
