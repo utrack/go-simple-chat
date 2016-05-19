@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"github.com/utrack/go-simple-chat/client"
 	"github.com/utrack/go-simple-chat/message"
 	"sync"
 )
@@ -36,6 +37,17 @@ func NewHub() *Hub {
 	}
 }
 
+// RegisterClient adds the client to the Hub.
+func (h *Hub) RegisterClient(c client.Client, name string) error {
+	if h.clientExists(name) {
+		return ErrNickCollision
+	}
+
+	sess := newSession(c, name, h.incomingMsgs, h.incomingDiscons)
+	h.addSession(sess)
+	return nil
+}
+
 // Run starts the message processing pump which accepts
 // messages from the clients and routes them around.
 func (h *Hub) Run() {
@@ -56,7 +68,7 @@ func (h *Hub) pump() {
 }
 
 // removeSession removes the session from sessions' dict.
-func (h *Hub) removeSession(key sess) {
+func (h *Hub) removeSession(key string) {
 	h.sessionsMu.Lock()
 	defer h.sessionsMu.Unlock()
 	delete(h.sessions, key)
@@ -80,8 +92,17 @@ func (h *Hub) sendMsg(m message.One) {
 	var err error
 	for _, sess := range h.sessions {
 		err = sess.send(m)
+		err.Error()
 		// TODO log debug
 		// Sessions and clients handle error thresholds themselves,
 		// so hub shouldn't discon the session on its own.
 	}
+}
+
+// clientExists returns true if the client with given name was found.
+func (h *Hub) clientExists(name string) bool {
+	h.sessionsMu.RLock()
+	defer h.sessionsMu.RUnlock()
+	_, ok := h.sessions[name]
+	return ok
 }
