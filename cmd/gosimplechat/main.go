@@ -10,7 +10,7 @@ import (
 )
 
 var httpAddr = flag.String("addr", ":8080", "HTTP socket listening address")
-var logLevel = flag.String("log", "Info", "Logging level: Debug,Info,Warn,Error,Fatal")
+var logLevel = flag.String("log", "info", "Logging level: Debug,Info,Warn,Error,Fatal")
 
 func main() {
 
