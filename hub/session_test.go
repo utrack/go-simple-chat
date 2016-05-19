@@ -67,6 +67,23 @@ func TestSession(t *testing.T) {
 				So(0, ShouldEqual, "Hub didn't receive the message!")
 			}
 
+			Convey("Should block bad/unknown EventTypes", func() {
+				for i := 0; i < 10; i++ {
+					if i == message.EventMessage || i == message.EventPresenceState {
+						continue
+					}
+
+					msg := message.One{Type: message.EventType(i), IsMuted: true, From: "foobar", Text: "hello world"}
+					c.msgChan <- msg
+
+					var got message.One
+					select {
+					case got = <-msgChan:
+						So(got, ShouldEqual, "Hub shouldn't receive the message!")
+					case <-time.After(time.Millisecond * 200):
+					}
+				}
+			})
 			Convey("Message's data should be equal to the sent one", func() {
 				So(got.Text, ShouldEqual, msg.Text)
 				So(got.IsMuted, ShouldEqual, msg.IsMuted)

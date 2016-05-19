@@ -41,6 +41,13 @@ func (s *session) runPump() {
 	for {
 		select {
 		case msg := <-incoming:
+			// Filter out malicious EventTypes
+			switch msg.Type {
+			case message.EventMessage:
+			case message.EventPresenceState:
+			default:
+				continue
+			}
 			msg.From = s.name
 			s.chatChannelChan <- msg
 		case disconReason := <-discon:
