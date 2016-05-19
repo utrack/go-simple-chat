@@ -26,6 +26,8 @@ type client struct {
 	messagesRcvd chan message.One
 }
 
+// NewClient returns a client.Client chat connection for
+// provided WebSocket connection.
 func NewClient(ws *websocket.Conn) clientIface.Client {
 	ret := &client{
 		ws:             ws,

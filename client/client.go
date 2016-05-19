@@ -5,6 +5,7 @@ import (
 	"github.com/utrack/go-simple-chat/message"
 )
 
+// Client is a common interface to clients' incoming connections.
 type Client interface {
 	// Send sends the message packet to the client. Returns err on error.
 	Send(message.One) error

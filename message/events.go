@@ -4,6 +4,7 @@ package message
 type EventType uint64
 
 const (
+	// EventUnknown is the default EventType.
 	EventUnknown = iota
 	// EventJoin is sent when some user joins the channel.
 	EventJoin
@@ -13,7 +14,7 @@ const (
 	EventPresenceState
 	// EventMessage is sent when a message was received.
 	EventMessage
-	// EventError is sent when an error had occured. Normally it's sent only
+	// EventError is sent when an error had occurred. Normally it's sent only
 	// during the connection establishment phase.
 	EventError
 )
