@@ -296,11 +296,13 @@ func TestLogging(t *testing.T) {
 		h.Run()
 
 		Convey("With logfunc", func() {
-			var lastLogLevel logger.Level
-			var lastLogMsg string
+			type LogMsg struct {
+				Lvl logger.Level
+				Msg string
+			}
+			logs := make(chan LogMsg, 10)
 			h.log = func(l logger.Level, f string, opts ...interface{}) {
-				lastLogLevel = l
-				lastLogMsg = f
+				logs <- LogMsg{Lvl: l, Msg: f}
 			}
 
 			Convey("On join", func() {
@@ -309,15 +311,29 @@ func TestLogging(t *testing.T) {
 				So(h.RegisterClient(c1, cName), ShouldBeNil)
 
 				Convey("Should log successfully", func() {
-					So(lastLogLevel, ShouldEqual, logger.LevelDebug)
-					So(lastLogMsg, ShouldEqual, `User connected: %v`)
+					var logMsg LogMsg
+					select {
+					case logMsg = <-logs:
+					case <-time.After(time.Second):
+						So(0, ShouldEqual, "Logs were not sent!")
+					}
+					So(logMsg.Lvl, ShouldEqual, logger.LevelDebug)
+					So(logMsg.Msg, ShouldEqual, `User connected: %v`)
 				})
 
 				Convey("On leave", func() {
+					// Dump UserConnected
+					<-logs
 					c1.discChan <- errors.New("test")
-					<-time.After(time.Second / 3)
-					So(lastLogLevel, ShouldEqual, logger.LevelDebug)
-					So(lastLogMsg, ShouldEqual, `User dropped: %v, reason %v`)
+
+					var logMsg LogMsg
+					select {
+					case logMsg = <-logs:
+					case <-time.After(time.Second):
+						So(0, ShouldEqual, "Logs were not sent!")
+					}
+					So(logMsg.Lvl, ShouldEqual, logger.LevelDebug)
+					So(logMsg.Msg, ShouldEqual, `User dropped: %v, reason %v`)
 
 				})
 
