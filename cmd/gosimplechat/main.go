@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/Sirupsen/logrus"
 	"github.com/kennygrant/sanitize"
+	"github.com/utrack/go-simple-chat/assets"
 	"github.com/utrack/go-simple-chat/client/bot"
 	"github.com/utrack/go-simple-chat/hub"
 	"github.com/utrack/go-simple-chat/interface/http"
@@ -13,7 +14,6 @@ import (
 
 var httpAddr = flag.String("addr", ":8080", "HTTP socket listening address")
 var logLevel = flag.String("log", "info", "Logging level: Debug,Info,Warn,Error,Fatal")
-var tmplPath = flag.String("static", "assets/static/chat.tmpl", "Path to the page's template")
 
 func main() {
 	flag.Parse()
@@ -31,7 +31,10 @@ func main() {
 	h.Run()
 	h.RegisterClient(clientBot.NewBot(), "ChuckServ")
 
-	staticTemplate := template.Must(template.ParseFiles(*tmplPath))
+	staticTemplate, err := getTemplate()
+	if err != nil {
+		logrus.WithError(err).Fatal("Error when parsing templates!")
+	}
 	http.HandleFunc(`/`, serveStatic(staticTemplate))
 	http.HandleFunc(`/ws`, ifaceHttp.ServeWs(h))
 
@@ -40,4 +43,13 @@ func main() {
 	if err != nil {
 		logrus.WithError(err).Fatal("Error when starting HTTP server!")
 	}
+}
+
+func getTemplate() (*template.Template, error) {
+	buf, err := assets.Asset("chat.tmpl")
+	if err != nil {
+		return nil, err
+	}
+	return template.New("chat").Parse(string(buf))
+
 }
