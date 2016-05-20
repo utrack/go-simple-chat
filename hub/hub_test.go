@@ -3,6 +3,7 @@ package hub
 import (
 	"errors"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/utrack/go-simple-chat/logger"
 	"github.com/utrack/go-simple-chat/message"
 	"strings"
 	"testing"
@@ -12,6 +13,8 @@ import (
 func TestHub(t *testing.T) {
 	Convey("With hub", t, func() {
 		h := NewHub(nil, nil, nil).(*hub)
+		h.log = func(l logger.Level, f string, opts ...interface{}) {
+		}
 
 		// Run the pumps
 		h.Run()
@@ -81,7 +84,6 @@ func TestHub(t *testing.T) {
 			})
 
 			Convey("Should deregister client on discon", func() {
-				// TODO check logging
 				c1.discChan <- errors.New("test")
 				<-time.After(time.Second / 2)
 				So(h.clientExists(cName), ShouldBeFalse)
@@ -281,6 +283,44 @@ func TestHub(t *testing.T) {
 					})
 
 				})
+			})
+		})
+	})
+}
+
+func TestLogging(t *testing.T) {
+	Convey("With hub", t, func() {
+		h := NewHub(nil, nil, nil).(*hub)
+
+		// Run the pumps
+		h.Run()
+
+		Convey("With logfunc", func() {
+			var lastLogLevel logger.Level
+			var lastLogMsg string
+			h.log = func(l logger.Level, f string, opts ...interface{}) {
+				lastLogLevel = l
+				lastLogMsg = f
+			}
+
+			Convey("On join", func() {
+				cName := "client1"
+				c1 := newClientMock()
+				So(h.RegisterClient(c1, cName), ShouldBeNil)
+
+				Convey("Should log successfully", func() {
+					So(lastLogLevel, ShouldEqual, logger.LevelDebug)
+					So(lastLogMsg, ShouldEqual, `User connected: %v`)
+				})
+
+				Convey("On leave", func() {
+					c1.discChan <- errors.New("test")
+					<-time.After(time.Second / 3)
+					So(lastLogLevel, ShouldEqual, logger.LevelDebug)
+					So(lastLogMsg, ShouldEqual, `User dropped: %v, reason %v`)
+
+				})
+
 			})
 		})
 	})
