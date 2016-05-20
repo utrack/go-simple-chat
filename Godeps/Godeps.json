@@ -1,0 +1,49 @@
+{
+	"ImportPath": "github.com/utrack/go-simple-chat",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v60",
+	"Packages": [
+		"./cmd/gosimplechat"
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.10.0-16-gcd7d1bb",
+			"Rev": "cd7d1bbe41066b6c1f19780f895901052150a575"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Comment": "v1.0.0",
+			"Rev": "1f512fc3f05332ba7117626cdfb4e07474e58e60"
+		},
+		{
+			"ImportPath": "github.com/kennygrant/sanitize",
+			"Comment": "v1.0",
+			"Rev": "ce9fd1f6ce32afaa38b51feea32320fc8875e8e4"
+		},
+		{
+			"ImportPath": "github.com/pquerna/ffjson/ffjson",
+			"Rev": "fa49a9f5832ba121db144795c147fe8449124aeb"
+		},
+		{
+			"ImportPath": "github.com/pquerna/ffjson/fflib/v1",
+			"Rev": "fa49a9f5832ba121db144795c147fe8449124aeb"
+		},
+		{
+			"ImportPath": "github.com/pquerna/ffjson/fflib/v1/internal",
+			"Rev": "fa49a9f5832ba121db144795c147fe8449124aeb"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html",
+			"Rev": "8a52c78636f6b7be1b1e5cb58b01a85f1e082659"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html/atom",
+			"Rev": "8a52c78636f6b7be1b1e5cb58b01a85f1e082659"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03"
+		}
+	]
+}
