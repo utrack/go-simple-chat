@@ -10,7 +10,20 @@ env:
 
 script:
   - go test -v -race -covermode=atomic --coverprofile=coverage.out github.com/utrack/go-simple-chat/hub
-#- tail -n +2 coverage_main.out >> coverage.out
+  - go test -v -race -covermode=atomic --coverprofile=cov2.out github.com/utrack/go-simple-chat/client
+  - tail -n +2 cov2.out >> coverage.out
+  - go test -v -race -covermode=atomic --coverprofile=cov2.out github.com/utrack/go-simple-chat/client/ws
+  - tail -n +2 cov2.out >> coverage.out
+  - go test -v -race -covermode=atomic --coverprofile=cov2.out github.com/utrack/go-simple-chat/client/bot
+  - tail -n +2 cov2.out >> coverage.out
+  - go test -v -race -covermode=atomic --coverprofile=cov2.out github.com/utrack/go-simple-chat/interface/http
+  - tail -n +2 cov2.out >> coverage.out
+  - go test -v -race -covermode=atomic --coverprofile=cov2.out github.com/utrack/go-simple-chat/logger
+  - tail -n +2 cov2.out >> coverage.out
+  - go test -v -race -covermode=atomic --coverprofile=cov2.out github.com/utrack/go-simple-chat/message
+  - tail -n +2 cov2.out >> coverage.out
+  - go test -v -race -covermode=atomic --coverprofile=cov2.out github.com/utrack/go-simple-chat/cmd/gosimplechat
+  - tail -n +2 cov2.out >> coverage.out
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
