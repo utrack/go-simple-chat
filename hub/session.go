@@ -48,6 +48,7 @@ func (s *session) runPump() {
 			default:
 				continue
 			}
+
 			msg.From = s.name
 			s.chatChannelChan <- msg
 		case disconReason := <-discon:

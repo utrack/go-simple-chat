@@ -46,7 +46,7 @@ func main() {
 }
 
 func getTemplate() (*template.Template, error) {
-	buf, err := assets.Asset("chat.tmpl")
+	buf, err := assets.Asset("assets/static/chat.tmpl")
 	if err != nil {
 		return nil, err
 	}

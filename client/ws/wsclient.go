@@ -111,7 +111,7 @@ func (c *client) readPump() {
 	for {
 		_, dataPkg, err := c.ws.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				errDiscon = err
 			}
 			break
@@ -128,7 +128,7 @@ func (c *client) readPump() {
 func (c *client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 
-	var err error
+	var err = errDisconGoingAway
 	// Forward the discon info on disconnect
 	defer func() {
 		c.discon(err)

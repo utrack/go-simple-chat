@@ -3,7 +3,7 @@
 all: build
 
 build: bindata
-	go build github.com/utrack/go-simple-chat
+	go build github.com/utrack/go-simple-chat/cmd/gosimplechat
 
 bindata: assets/assets.go
 
