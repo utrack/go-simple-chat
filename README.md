@@ -32,3 +32,7 @@ Use flag `-log debug` for more verbose logging.
 go test github.com/utrack/go-simple-chat/...
 ```
 Tests are written using the [GoConvey](https://github.com/smartystreets/goconvey) framework. If you have `goconvey` tools installed in your `$PATH`, cd to the project's path and run `goconvey` to use its web interface.
+
+## TODO
+- [ ] replay last `n` messages, push them to the ring buffer and play on join
+- [ ] group clients by their type to avoid unneccessary marshalling (hub(core)->groups(marshalling)->sessions(conn control)->clients(socket/interface level)
